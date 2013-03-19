@@ -15,6 +15,7 @@ default:
         - perl-Error
 deb:
     arch: amd64
+    perl: /usr/bin/perl
     provides:
         - perl-seco-class
         - perl-seco-cpan
