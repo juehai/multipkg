@@ -4,5 +4,5 @@ Architecture: %arch%
 Depends: %requirelist%
 Maintainer: %whoami%
 Source: %name%
-Description: 
+Description:
  %summary%
