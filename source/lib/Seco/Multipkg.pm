@@ -464,6 +464,25 @@ sub fetch {
     $self->info->data->{sourcetar} = $loc;
 
   }
+  # build from git
+  elsif ( $target = $self->info->data->{'git'} ) {
+
+    eval { require Seco::Git; };
+    die "Seco::Git required to build package from web: $@" if ($@);
+    $self->infomsg("Fetching $target");
+    my $agent = Seco::HTTP->new(
+      branch     => $self->info->data->{'git-branch'},
+      depositdir => ( $self->tmpdir . "/git" ),
+      tmpdir     => $self->tmpdir
+    );
+
+    my $hash = $agent->pull($target)
+      or die "Unable to pull $target: $!";
+    my $loc  = $hash->{sourcedir};
+
+    $self->info->data->{sourcedir} = $loc;
+
+  }
 }
 
 sub build {
