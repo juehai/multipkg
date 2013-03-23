@@ -303,9 +303,9 @@ sub install_gemspec {
 
   my $geminstalldir = [$self->runcmd("gem environment gemdir")]->[0];
   return $self->error("Can't run: $@") if($@);
-  
+
   chomp $geminstalldir;
-  my $fullinstalldir = $geminstalldir . "/gems/" . 
+  my $fullinstalldir = $geminstalldir . "/gems/" .
     $self->info->data->{name} . "-" .
       $self->info->data->{version};
   foreach ($self->listdir("$installdir/$fullinstalldir")) {
@@ -320,7 +320,7 @@ sub install_gemspec {
 
   my $name = $self->info->data->{'name'};
   my $version = $self->info->data->{'version'};
-  
+
   $self->runcmd("mkdir -p $installdir/$geminstalldir/specifications");
   $self->template_file($self->info->confdir . "/templates/gemspec.template",
                        "$installdir/$geminstalldir/specifications/" .
@@ -381,6 +381,23 @@ sub listdir {
   # preserve daemontools log dirs, not needed with new logrun
   #@ret = ($dir) if(scalar @ret == 0 and $dir eq 'main');
   return @ret;
+}
+
+sub sudo {
+    # this procedure is modified from Seco::sudo
+    my $self = shift;
+    my $who = shift;
+    my $uid = getpwnam($who);
+
+    return system(@_) if ($> == $uid);
+
+    my $whoami = getpwuid($>);
+    warn "$whoami: This operation needs '$who' privileges. Invoking sudo.\n";
+
+    foreach my $sudo (qw(/usr/local/bin/sudo /usr/bin/sudo)) {
+	next unless -x $sudo;
+	return system($sudo, '-u', $who, @_);
+    }
 }
 
 # XXX: maybe keep a "global log of all command output" in the builder object,
@@ -494,6 +511,13 @@ sub build {
   # fetch source from remote
   $self->fetch();
 
+  # check and install buildrequire
+  foreach(@{$self->info->data->{buildrequires}}) {
+      $self->infomsg("INSTALLING $_");
+      $self->install_build_require( $_ )
+	if $self->need_build_require( $_ );
+  }
+
   # build the source if there is any
   if ( $self->info->data->{sourcedir} and -d $self->info->data->{sourcedir} ) {
     $self->infomsg( "Building from " . $self->info->data->{sourcedir} );
@@ -549,7 +573,7 @@ sub build {
      $self->info->scripts->{gembuild}) {
     # FATAL ON ERRORS
     $self->runcmd( "PERL=$perl INSTALLROOT=$destdir DESTDIR=$destdir "
-		   . "PREFIX=$prefix PKGVERID=" 
+		   . "PREFIX=$prefix PKGVERID="
 		   . $self->pkgverid . " "
 		   . "PACKAGEVERSION=" . $self->info->data->{version} . " "
 		   . "PACKAGENAME=" . $self->info->data->{name} . " "
@@ -558,7 +582,7 @@ sub build {
   } else {
     # FATAL ON ERRORS
     $self->runcmd( "PERL=$perl INSTALLROOT=$destdir DESTDIR=$destdir "
-		   . "PREFIX=$prefix PKGVERID=" 
+		   . "PREFIX=$prefix PKGVERID="
 		   . $self->pkgverid . " "
 		   . "PACKAGEVERSION=" . $self->info->data->{version} . " "
 		   . "PACKAGENAME=" . $self->info->data->{name} . " "
@@ -836,6 +860,25 @@ BEGIN {
   __PACKAGE__->_accessors( stagedir => undef );
 }
 
+sub need_build_require {
+    my $self = shift;
+    my $package = shift;
+
+    system('rpm', '--quiet', '-q', $package);
+
+    return ($? >> 8);
+}
+
+sub install_build_require {
+    my $self = shift;
+    my $package = shift;
+
+    $self->sudo('root', 'yum', 'install', '-y', $package);
+    return $self->error("Can't run yum install $package") if ($? >> 8);
+
+    1;
+}
+
 sub makepackage {
   my $self = shift;
 
@@ -853,7 +896,7 @@ sub makepackage {
     chomp $self->info->data->{arch};
   }
 
-  $self->template_file( $self->info->confdir . "/templates/spec.template", 
+  $self->template_file( $self->info->confdir . "/templates/spec.template",
                         $self->tmpdir . "/spec" );
 
   open my $f, ">>" . $self->tmpdir . "/spec";
@@ -863,7 +906,7 @@ sub makepackage {
   if($self->info->data->{gem}) {
     $self->install_gemspec;
   }
-  
+
   foreach ( $self->listdir($installdir) ) {
     my $path = "$installdir/$_";
     next if m{/\.packlist$};    # XXX: cleanup in build, not here
@@ -1014,6 +1057,27 @@ BEGIN {
 
 }
 
+sub need_build_require {
+    my $self = shift;
+    my $package = shift;
+
+    my $out = qx(dpkg-query -W --showformat='\${Status}' '$package');
+
+    return 0 if $out =~ /installed/;
+
+    1;
+}
+
+sub install_build_require {
+    my $self = shift;
+    my $package = shift;
+
+    $self->sudo('root', 'apt-get', '-y', 'install', $package);
+    return $self->error("Can't run apt-get install $package") if ($? >> 8);
+
+    1;
+}
+
 sub makepackage {
   my $self = shift;
 
@@ -1081,17 +1145,17 @@ sub makepackage {
     }
   }
   $self->info->data->{filelist} = join ",", @filelist;
-  
+
   # generate the gemspec file based on that
   my $name = $self->info->data->{name};
   my $version = $self->info->data->{version};
-  
+
   $self->runcmd("mkdir -p $installdir/$geminstalldir/specifications");
-  
+
   $self->template_file($self->info->confdir . "/templates/gemspec.template",
                        "$installdir/$geminstalldir/specifications/" .
                        "$name-$version.gemspec");
-  
+
   chdir($installdir . "/" . $fullinstalldir);
   my $gem = undef;
   my @ten = $self->runcmd("gem build $installdir/$geminstalldir/" .
