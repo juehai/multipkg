@@ -303,9 +303,9 @@ sub install_gemspec {
 
   my $geminstalldir = [$self->runcmd("gem environment gemdir")]->[0];
   return $self->error("Can't run: $@") if($@);
-  
+
   chomp $geminstalldir;
-  my $fullinstalldir = $geminstalldir . "/gems/" . 
+  my $fullinstalldir = $geminstalldir . "/gems/" .
     $self->info->data->{name} . "-" .
       $self->info->data->{version};
   foreach ($self->listdir("$installdir/$fullinstalldir")) {
@@ -320,7 +320,7 @@ sub install_gemspec {
 
   my $name = $self->info->data->{'name'};
   my $version = $self->info->data->{'version'};
-  
+
   $self->runcmd("mkdir -p $installdir/$geminstalldir/specifications");
   $self->template_file($self->info->confdir . "/templates/gemspec.template",
                        "$installdir/$geminstalldir/specifications/" .
@@ -504,7 +504,7 @@ sub build {
      $self->info->scripts->{gembuild}) {
     # FATAL ON ERRORS
     $self->runcmd( "PERL=$perl INSTALLROOT=$destdir DESTDIR=$destdir "
-		   . "PREFIX=$prefix PKGVERID=" 
+		   . "PREFIX=$prefix PKGVERID="
 		   . $self->pkgverid . " "
 		   . "PACKAGEVERSION=" . $self->info->data->{version} . " "
 		   . "PACKAGENAME=" . $self->info->data->{name} . " "
@@ -513,7 +513,7 @@ sub build {
   } else {
     # FATAL ON ERRORS
     $self->runcmd( "PERL=$perl INSTALLROOT=$destdir DESTDIR=$destdir "
-		   . "PREFIX=$prefix PKGVERID=" 
+		   . "PREFIX=$prefix PKGVERID="
 		   . $self->pkgverid . " "
 		   . "PACKAGEVERSION=" . $self->info->data->{version} . " "
 		   . "PACKAGENAME=" . $self->info->data->{name} . " "
@@ -808,7 +808,7 @@ sub makepackage {
     chomp $self->info->data->{arch};
   }
 
-  $self->template_file( $self->info->confdir . "/templates/spec.template", 
+  $self->template_file( $self->info->confdir . "/templates/spec.template",
                         $self->tmpdir . "/spec" );
 
   open my $f, ">>" . $self->tmpdir . "/spec";
@@ -818,7 +818,7 @@ sub makepackage {
   if($self->info->data->{gem}) {
     $self->install_gemspec;
   }
-  
+
   foreach ( $self->listdir($installdir) ) {
     my $path = "$installdir/$_";
     next if m{/\.packlist$};    # XXX: cleanup in build, not here
@@ -1036,17 +1036,17 @@ sub makepackage {
     }
   }
   $self->info->data->{filelist} = join ",", @filelist;
-  
+
   # generate the gemspec file based on that
   my $name = $self->info->data->{name};
   my $version = $self->info->data->{version};
-  
+
   $self->runcmd("mkdir -p $installdir/$geminstalldir/specifications");
-  
+
   $self->template_file($self->info->confdir . "/templates/gemspec.template",
                        "$installdir/$geminstalldir/specifications/" .
                        "$name-$version.gemspec");
-  
+
   chdir($installdir . "/" . $fullinstalldir);
   my $gem = undef;
   my @ten = $self->runcmd("gem build $installdir/$geminstalldir/" .
@@ -1118,7 +1118,7 @@ sub _init {
 
     my $table;
     eval { $table = YAML::Syck::LoadFile($_); };
-    return $self->error("$_ exists but is malformed: $@") if $@;
+    die ("FATAL: $_ exists but is malformed: $@") if $@;
     $self->infomsg( "LOADING " . $_ );
 
     foreach my $key ( keys %$table ) {
