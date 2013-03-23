@@ -1227,7 +1227,7 @@ sub _init {
 
     my $table;
     eval { $table = YAML::Syck::LoadFile($_); };
-    return $self->error("$_ exists but is malformed: $@") if $@;
+    die ("FATAL: $_ exists but is malformed: $@") if $@;
     $self->infomsg( "LOADING " . $_ );
 
     foreach my $key ( keys %$table ) {
