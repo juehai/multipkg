@@ -1063,7 +1063,7 @@ sub need_build_require {
 
     my $out = qx(dpkg-query -W --showformat='\${Status}' '$package');
 
-    return 0 if $out =~ /installed/;
+    return 0 if $out =~ /install ok installed/;
 
     1;
 }
