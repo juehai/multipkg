@@ -162,6 +162,14 @@ sub _init {
   $self->{_rules} = [ $self->get_file_rules ];
 }
 
+sub need_build_require {
+    warn "WARN: Don't know how to check if build requires installed."
+         ." You gonna check it yourself\n";
+    0;
+}
+
+sub install_build_require { 1 }
+
 sub setrelease {
   my $self = shift;
 
