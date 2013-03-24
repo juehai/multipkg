@@ -2,7 +2,7 @@
 
 multipkg=$(which multipkg)
 
-if [ -z "$multipkg"]; then
+if [ -z "$multipkg" ]; then
   cp -v source/lib/Seco/Multipkg.pm Multipkg.pm.orig
 
   echo "Installing buildrequires. It may require sudo privileges."
@@ -12,8 +12,8 @@ if [ -z "$multipkg"]; then
     sudo yum install -y perl-YAML-Syck perl-ExtUtils-MakeMaker
     rm -v -f multipkg-*.rpm
   elif which dpkg; then
-    sudo apt-get install build-essential
-    rm -v -f multipkg-*.deb
+    sudo apt-get -y install build-essential
+    rm -v -f multipkg_*.deb
   fi
 
   PREFIX=./root PKGVERID=0 INSTALLDIR=source scripts/transform
@@ -23,8 +23,8 @@ if [ -z "$multipkg"]; then
     sudo yum install -y multipkg-*rpm
     rm -v multipkg-*rpm
   elif which dpkg; then
-    sudo dpkg -i multipkg-*deb
-    rm -v multipkg-*deb
+    sudo dpkg -i multipkg_*deb
+    rm -v multipkg_*deb
   fi
 
   unset PREFIX PKGVERID INSTALLDIR
@@ -45,4 +45,4 @@ fi
 echo ======================
 echo == package build ok ==
 echo ======================
-ls -alh multipkg-*
+ls -alh multipkg*
