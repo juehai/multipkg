@@ -163,8 +163,8 @@ sub _init {
 }
 
 sub need_build_require {
-    warn "WARN: Don't know how to check if build requires installed."
-         ." You gonna check it yourself\n";
+    warn "WARN: Don't know how to install build requires."
+         ." Please install yourself.\n";
     0;
 }
 
