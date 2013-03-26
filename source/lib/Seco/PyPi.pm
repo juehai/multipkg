@@ -1,4 +1,4 @@
-package Seco::Git;
+package Seco::PyPi;
 
 # created at : 2013-03-21 15:56:19
 # author     : Jianing Yang <jianingy.yang AT gmail DOT com>
@@ -10,10 +10,9 @@ use File::Copy qw(copy);
 use File::Temp qw/tempfile tempdir/;
 use Cwd;
 use Getopt::Long qw/:config require_order gnu_compat/;
-use Git;
 
 BEGIN {
-    __PACKAGE__->_accessors(branch => undef,
+    __PACKAGE__->_accessors(xfercmd => undef,
                             depositdir => undef,
                             tmpdir => undef);
     __PACKAGE__->_requires(qw/depositdir/);
@@ -31,25 +30,40 @@ sub _init {
     return 1;
 }
 
-# Clone the source repository to a local directory
-sub clone {
-    my ($repo, $target, $opts) = @_;
-    info("Cloning from $repo to $target");
-    my $out = Git::command('clone', '-b', $opts->{B}, $repo, $target);
-    info($out);
-}
-
 sub pull {
     my $self = shift;
-    my $repo = shift;
+    my $name = shift;
+    my $version = shift;
 
     my $basedir = $self->tmpdir . "/build";
     mkdir $basedir unless(-d $basedir);
 
     my $target = $self->depositdir . '/source';
-    my $out = Git::command('clone', '-b', $self->branch, $repo, $target);
+    my $index = "https://pypi.python.org/pypi/$name/$version/json";
 
-    return { sourcedir => $target };
+    eval { require JSON; };
+    die "JSON required to install pypi modules" if ($@);
+
+    my $json = qx(curl $index);
+    my $pypi = JSON->new->utf8->decode($json);
+
+    foreach my $pkg (@{$pypi->{'urls'}}) {
+       next if $pkg->{'url'} !~ /.tar.gz$/;
+
+       my $url = $pkg->{'url'};
+       my $tarball = $self->depositdir . '/source.tar.gz';
+       my $xfercmd = $self->xfercmd;
+
+       $xfercmd =~ s/%s/$tarball/;
+       $xfercmd =~ s/%u/$url/;
+
+       system($xfercmd); 
+
+       return { sourcetar => $tarball };
+
+    }
+
+    undef;
 }
 
 1;

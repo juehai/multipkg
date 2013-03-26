@@ -495,7 +495,7 @@ sub fetch {
     eval { require Seco::Git; };
     die "Seco::Git required to build package from web: $@" if ($@);
     $self->infomsg("Fetching $target");
-    my $agent = Seco::HTTP->new(
+    my $agent = Seco::Git->new(
       branch     => $self->info->data->{'git-branch'},
       depositdir => ( $self->tmpdir . "/git" ),
       tmpdir     => $self->tmpdir
@@ -506,6 +506,26 @@ sub fetch {
     my $loc  = $hash->{sourcedir};
 
     $self->info->data->{sourcedir} = $loc;
+
+  }
+  # build from pypi.python.org
+  elsif ( $target = $self->info->data->{'pypi'} ) {
+    eval { require Seco::PyPi; };
+    die "Seco::Pypi required to build package from web: $@" if ($@);
+    $self->infomsg("Fetching $target");
+    my $agent = Seco::PyPi->new(
+      xfercmd    => $self->info->data->{xfercmd},
+      version    => $self->info->data->{'version'},
+      depositdir => ( $self->tmpdir . "/pypi" ),
+      tmpdir     => $self->tmpdir
+    );
+
+    my $hash = $agent->pull($target, $self->info->data->{'version'})
+      or die "Unable to pull $target: $!";
+    my $loc  = $hash->{sourcetar};
+
+    $self->info->data->{sourcetar} = $loc;
+    $self->info->scripts->{build} = $self->info->confdir . '/scripts/pypi.build';
 
   }
 }
