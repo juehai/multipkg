@@ -470,7 +470,7 @@ sub fetch {
     eval { require Seco::Git; };
     die "Seco::Git required to build package from web: $@" if ($@);
     $self->infomsg("Fetching $target");
-    my $agent = Seco::HTTP->new(
+    my $agent = Seco::Git->new(
       branch     => $self->info->data->{'git-branch'},
       depositdir => ( $self->tmpdir . "/git" ),
       tmpdir     => $self->tmpdir

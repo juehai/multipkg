@@ -1,4 +1,4 @@
-package Seco::HTTP;
+package Seco::Git;
 
 # created at : 2013-03-21 15:56:19
 # author     : Jianing Yang <jianingy.yang AT gmail DOT com>
