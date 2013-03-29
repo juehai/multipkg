@@ -525,9 +525,6 @@ sub fetch {
     my $loc  = $hash->{sourcetar};
 
     $self->info->data->{sourcetar} = $loc;
-    $self->info->scripts->{build} = $self->info->confdir . '/scripts/pypi.build'
-      unless -x $self->info->scripts->{build};
-
   }
 }
 

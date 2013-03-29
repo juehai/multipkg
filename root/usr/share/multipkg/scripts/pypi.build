@@ -1,5 +1,0 @@
-#!/bin/sh
-
-PYTHONHOME=$(dirname $PYTHON)/..
-$PYTHON setup.py build
-$PYTHON setup.py install --root=$DESTDIR
