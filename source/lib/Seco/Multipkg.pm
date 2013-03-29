@@ -544,6 +544,7 @@ sub build {
   my $destdir = $self->installdir;
   my $prefix  = $self->info->data->{buildprefix}?$self->info->data->{buildprefix}:"/usr";
   my $perl    = $self->info->data->{perl}?$self->info->data->{perl}:"/usr/bin/perl";
+  my $python  = $self->info->data->{python}?$self->info->data->{python}:"/usr/bin/python";
 
   chdir $realbuild;
   $self->{_vars}{BUILDDIR} = $realbuild;
@@ -569,6 +570,7 @@ sub build {
      $self->info->scripts->{gembuild}) {
     # FATAL ON ERRORS
     $self->runcmd( "PERL=$perl INSTALLROOT=$destdir DESTDIR=$destdir "
+                   . "PYTHON=$python "
 		   . "PREFIX=$prefix PKGVERID=" 
 		   . $self->pkgverid . " "
 		   . "PACKAGEVERSION=" . $self->info->data->{version} . " "
@@ -578,6 +580,7 @@ sub build {
   } else {
     # FATAL ON ERRORS
     $self->runcmd( "PERL=$perl INSTALLROOT=$destdir DESTDIR=$destdir "
+                   . "PYTHON=$python "
 		   . "PREFIX=$prefix PKGVERID=" 
 		   . $self->pkgverid . " "
 		   . "PACKAGEVERSION=" . $self->info->data->{version} . " "
