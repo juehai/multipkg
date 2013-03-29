@@ -1,4 +1,4 @@
 #!/bin/sh
 
-python setup.py build
-python setup.py install --root=$DESTDIR
+$PYTHON setup.py build
+$PYTHON setup.py install --root=$DESTDIR

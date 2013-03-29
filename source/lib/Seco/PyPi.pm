@@ -27,9 +27,7 @@ sub _init {
     $self->tmpdir(tempdir(CLEANUP => 0))
       unless(-d $self->tmpdir);
 
-    return 1;
-}
-
+    return 1; } 
 sub pull {
     my $self = shift;
     my $name = shift;
@@ -44,7 +42,7 @@ sub pull {
     eval { require JSON; };
     die "JSON required to install pypi modules" if ($@);
 
-    my $json = qx(curl $index);
+    my $json = qx(curl -s $index);
     my $pypi = JSON->new->utf8->decode($json);
 
     foreach my $pkg (@{$pypi->{'urls'}}) {
