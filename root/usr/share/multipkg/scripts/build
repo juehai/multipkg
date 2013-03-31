@@ -9,6 +9,11 @@ if [ -f Makefile.PL ]; then
     find $DESTDIR -name .packlist -type f -exec rm {} \;
 elif [ -f setup.py ]; then
     $PYTHON setup.py install --root $DESTDIR
+elif grep -qs "PHP_ARG_ENABLE" config9.m4 ; then
+    phpize
+    ./configure --prefix=$PREFIX || exit 1
+    make || exit 1
+    make install INSTALL_ROOT=$DESTDIR || exit 1
 else
     ./configure --prefix=$PREFIX || exit 1
     make || exit 1

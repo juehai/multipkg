@@ -526,6 +526,23 @@ sub fetch {
 
     $self->info->data->{sourcetar} = $loc;
   }
+  # build from pecl.php.net
+  elsif ( $target = $self->info->data->{'pecl'} ) {
+    eval { require Seco::PECL; };
+    die "Seco::PECL required to build package from pecl: $@" if ($@);
+    $self->infomsg("Fetching $target");
+    my $agent = Seco::PECL->new(
+      xfercmd    => $self->info->data->{xfercmd},
+      depositdir => ( $self->tmpdir . "/pypi" ),
+      tmpdir     => $self->tmpdir
+    );
+
+    my $hash = $agent->pull($target, $self->info->data->{'version'})
+      or die "Unable to pull $target: $!";
+    my $loc  = $hash->{sourcetar};
+
+    $self->info->data->{sourcetar} = $loc;
+  }
 }
 
 sub build {
