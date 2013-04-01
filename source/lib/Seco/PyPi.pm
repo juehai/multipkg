@@ -44,13 +44,17 @@ sub pull {
     eval { require JSON; };
     die "JSON required to install pypi modules" if ($@);
 
-    my $json = qx(curl -s $index);
+    my $json = qx(curl -s '$index');
     my $pypi = JSON->new->utf8->decode($json);
+    my $ver = 'UNKNOWN';
 
-    foreach my $pkg (@{$pypi->{'urls'}}) {
-       next if $pkg->{'url'} !~ /.tar.gz$/;
+    $version = $pypi->{info}->{version}
+      unless $version;
 
-       my $url = $pkg->{'url'};
+    foreach my $pkg (@{$pypi->{urls}}) {
+       next if $pkg->{url} !~ /.tar.gz$/;
+
+       my $url = $pkg->{url};
        my $tarball = $self->depositdir . '/source.tar.gz';
        my $xfercmd = $self->xfercmd;
 
@@ -59,7 +63,8 @@ sub pull {
 
        system($xfercmd); 
 
-       return { sourcetar => $tarball };
+       return { sourcetar => $tarball,
+                version   => $version };
 
     }
 
