@@ -27,7 +27,9 @@ sub _init {
     $self->tmpdir(tempdir(CLEANUP => 0))
       unless(-d $self->tmpdir);
 
-    return 1; } 
+    return 1;
+}
+
 sub pull {
     my $self = shift;
     my $name = shift;

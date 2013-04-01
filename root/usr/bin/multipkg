@@ -102,7 +102,7 @@ sub usage {
   }
 
   print sort @array;
-
+  print "\nVERSION: ", MULTIPKG_VERSION, "\n";
   die "$msg\n";
 }
 

@@ -493,7 +493,7 @@ sub fetch {
   elsif ( $target = $self->info->data->{'git'} ) {
 
     eval { require Seco::Git; };
-    die "Seco::Git required to build package from web: $@" if ($@);
+    die "Seco::Git required to build package from git: $@" if ($@);
     $self->infomsg("Fetching $target");
     my $agent = Seco::Git->new(
       branch     => $self->info->data->{'git-branch'},
@@ -511,7 +511,7 @@ sub fetch {
   # build from pypi.python.org
   elsif ( $target = $self->info->data->{'pypi'} ) {
     eval { require Seco::PyPi; };
-    die "Seco::Pypi required to build package from web: $@" if ($@);
+    die "Seco::Pypi required to build package from pypi: $@" if ($@);
     $self->infomsg("Fetching $target");
     my $agent = Seco::PyPi->new(
       xfercmd    => $self->info->data->{xfercmd},
