@@ -977,10 +977,10 @@ sub makepackage {
     }
 
     if ( -d _ ) {
-      print $f $rpmattr . "\%dir /$_\n" if ( -e "$path/.keep" );
+      print $f "\"" . $rpmattr . "\%dir /$_\"\n" if ( -e "$path/.keep" );
     }
     else {
-      print $f $rpmattr . "/$_\n";
+      print $f "\"" . $rpmattr . "/$_\"\n";
     }
   }
 
