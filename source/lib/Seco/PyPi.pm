@@ -52,10 +52,11 @@ sub pull {
       unless $version;
 
     foreach my $pkg (@{$pypi->{urls}}) {
-       next if $pkg->{url} !~ /.tar.gz$/;
+       next if $pkg->{url} !~ /(\.tar\.gz|\.tar\.bz2|\.tar\.xz|\.tgz)$/;
 
+       my $suffix = $1;
        my $url = $pkg->{url};
-       my $tarball = $self->depositdir . '/source.tar.gz';
+       my $tarball = $self->depositdir . '/source' . $suffix;
        my $xfercmd = $self->xfercmd;
 
        $xfercmd =~ s/%s/$tarball/;
