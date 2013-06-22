@@ -12,7 +12,7 @@ if [ -z "$multipkg" ]; then
     sudo yum install -y perl-YAML-Syck perl-ExtUtils-MakeMaker
     rm -v -f multipkg-*.rpm
   elif which dpkg; then
-    sudo apt-get -y install build-essential
+    sudo apt-get -y install build-essential libyaml-syck-perl libsvn-perl libjson-perl libfile-fnmatch-perl
     rm -v -f multipkg_*.deb
   fi
 
