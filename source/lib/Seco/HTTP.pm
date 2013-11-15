@@ -37,7 +37,14 @@ sub pull {
     my $basedir = $self->tmpdir . "/build";
     mkdir $basedir unless(-d $basedir);
 
-    my $tarball = $self->depositdir . '/source.tar.gz';
+    my $tarball;
+    if ($url =~ /\.tar\.bz2$/) {
+        $tarball = $self->depositdir . '/source.tar.bz2';
+    } elsif ($url =~ /\.tar\.xz$/) {
+        $tarball = $self->depositdir . '/source.tar.xz';
+    } else {
+        $tarball = $self->depositdir . '/source.tar.gz';
+    }
     my $xfercmd = $self->xfercmd;
 
     $xfercmd =~ s/%s/$tarball/;
