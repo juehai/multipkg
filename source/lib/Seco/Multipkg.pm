@@ -1425,7 +1425,7 @@ sub _init {
   $finaldata->{requires}  ||= [];
   $finaldata->{obsoletes} ||= [];
   if ( $scripts->{run} ) {
-    push @{ $finaldata->{requires} }, 'daemontools';
+    push @{ $finaldata->{requires} }, 'daemontools076';
     $scripts->{'post.sh'}  ||= $scripts->{'supervisepost.sh'};
     $scripts->{'preun.sh'} ||= $scripts->{'supervisepreun.sh'};
   }
