@@ -10,7 +10,7 @@ use Cwd;
 use Getopt::Long qw/:config require_order gnu_compat/;
 
 BEGIN {
-    __PACKAGE__->_accessors(mirror => 'http://www.perl.com/CPAN',
+    __PACKAGE__->_accessors(mirror => 'http://mirrors.aliyun.com/CPAN/',
                             depositdir => undef,
                             tmpdir => undef);
     __PACKAGE__->_requires(qw/depositdir/);
@@ -37,6 +37,11 @@ sub pull {
     $INC{'CPAN/Config.pm'} = '/dev/null';
     
     $CPAN::Config->{cpan_home} = "$basedir";
+    $CPAN::Config->{auto_commit} = "true";
+    $CPAN::Config->{mbuildpl_arg} = q[];
+    $CPAN::Config->{mbuild_arg} = q[];
+    $CPAN::Config->{mbuild_install_build_command} = q[];
+    $CPAN::Config->{mbuild_install_arg} = q[];
     $CPAN::Config->{build_dir} = "$basedir/build";
     $CPAN::Config->{build_cache} = q[10];
     $CPAN::Config->{cache_metadata} = q[1];
@@ -75,6 +80,7 @@ sub pull {
     $CPAN::Config->{cpan_version_check} = 0;
     
     # CPAN is very loud :(
+    # when debug comment it .
     open REAL, ">&STDOUT";
     open STDOUT, ">/dev/null";
     
