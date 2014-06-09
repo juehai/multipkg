@@ -9,7 +9,7 @@ if [ -z "$multipkg" ]; then
 
   if which yum; then
     sudo yum groupinstall -y 'Development Tools'
-    sudo yum install -y perl-YAML-Syck perl-ExtUtils-MakeMaker
+    sudo yum install -y perl-YAML-Syck perl-ExtUtils-MakeMaker perl-CPAN
     rm -v -f multipkg-*.rpm
   elif which dpkg; then
     sudo apt-get -y install build-essential libyaml-syck-perl libsvn-perl libjson-perl libfile-fnmatch-perl
