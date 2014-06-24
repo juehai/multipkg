@@ -1574,6 +1574,11 @@ sub platforms {
     if ( $rel =~ /Red Hat Linux release (\S+)/ ) {
       push @platforms, "redhat-$1";
     }
+
+    if ( $rel =~ /CentOS release (\S+)/ ) {
+      push @platforms, "centos-$1";
+      push @platforms, "centos";
+    }
   }
   push @platforms, 'override';
   push @platforms, $self->platform
