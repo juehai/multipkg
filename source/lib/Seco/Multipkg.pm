@@ -651,6 +651,7 @@ sub build {
 		   . $self->pkgverid . " "
 		   . "PACKAGEVERSION=" . $self->info->data->{version} . " "
 		   . "PACKAGENAME=" . $self->info->data->{name} . " "
+		   . "PACKAGETYPE=" . $self->info->data->{packagetype} . " "
 		   . $self->info->scripts->{build} );
     return $self->error("Error running: $@") if($@);
   } else {
@@ -661,6 +662,7 @@ sub build {
 		   . $self->pkgverid . " "
 		   . "PACKAGEVERSION=" . $self->info->data->{version} . " "
 		   . "PACKAGENAME=" . $self->info->data->{name} . " "
+		   . "PACKAGETYPE=" . $self->info->data->{packagetype} . " "
 		   . $self->info->scripts->{build} );
     return $self->error("Error running: $@") if($@);
   }
