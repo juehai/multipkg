@@ -16,8 +16,14 @@ if [ -z "$multipkg" ]; then
     rm -v -f multipkg_*.deb
   fi
 
+
   PREFIX=./root PKGVERID=0 INSTALLDIR=source scripts/transform
+ 
+  cd root/usr/share/multipkg && sudo ln -sf $(pwd) /usr/share/multipkg && cd -
+
   perl -I ./source/lib root/usr/bin/multipkg -t .
+
+  sudo rm -rf /usr/share/multipkg
 
   if which yum; then
     sudo yum install -y multipkg-*rpm
