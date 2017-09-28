@@ -3,6 +3,9 @@ Name: %name%
 Version: %version%
 Release: %release%
 License: %license%
+%%ifset(epoch)
+Epoch: %epoch
+%%endif
 Group: Local
 Provides: %name% %providelist%
 Packager: %whoami%

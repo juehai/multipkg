@@ -11,5 +11,3 @@ default:
 
 rpm:
   autoreqprov: no
-  epoch: 20
-
