@@ -1,4 +1,4 @@
-package Seco::HTTP;
+package Seco::Git;
 
 # created at : 2013-03-21 15:56:19
 # author     : Jianing Yang <jianingy.yang AT gmail DOT com>
@@ -10,9 +10,10 @@ use File::Copy qw(copy);
 use File::Temp qw/tempfile tempdir/;
 use Cwd;
 use Getopt::Long qw/:config require_order gnu_compat/;
+use Git;
 
 BEGIN {
-    __PACKAGE__->_accessors(xfercmd => undef,
+    __PACKAGE__->_accessors(branch => undef,
                             depositdir => undef,
                             tmpdir => undef);
     __PACKAGE__->_requires(qw/depositdir/);
@@ -30,30 +31,25 @@ sub _init {
     return 1;
 }
 
+# Clone the source repository to a local directory
+sub clone {
+    my ($repo, $target, $opts) = @_;
+    info("Cloning from $repo to $target");
+    my $out = Git::command('clone', '-b', $opts->{B}, $repo, $target);
+    info($out);
+}
+
 sub pull {
     my $self = shift;
-    my $url = shift;
+    my $repo = shift;
 
     my $basedir = $self->tmpdir . "/build";
     mkdir $basedir unless(-d $basedir);
 
-    my $tarball;
-    if ($url =~ /\.tar\.bz2$/) {
-        $tarball = $self->depositdir . '/source.tar.bz2';
-    } elsif ($url =~ /\.tar\.xz$/) {
-        $tarball = $self->depositdir . '/source.tar.xz';
-    } else {
-        $tarball = $self->depositdir . '/source.tar.gz';
-    }
-    my $xfercmd = $self->xfercmd;
+    my $target = $self->depositdir . '/source';
+    my $out = Git::command('clone', '-b', $self->branch, $repo, $target);
 
-    $xfercmd =~ s/%s/$tarball/;
-    $xfercmd =~ s/%u/$url/;
-
-    system($xfercmd); 
-    return undef if($? >> 8);
-
-    return { tarball => $tarball };
+    return { sourcedir => $target };
 }
 
 1;

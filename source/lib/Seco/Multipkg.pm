@@ -162,6 +162,14 @@ sub _init {
   $self->{_rules} = [ $self->get_file_rules ];
 }
 
+sub need_build_require {
+    warn "WARN: Don't know how to install build requires."
+         ." Please install yourself.\n";
+    0;
+}
+
+sub install_build_require { 1 }
+
 sub taroption {
   my $self = shift;
   my $tarball = shift;
@@ -332,9 +340,9 @@ sub install_gemspec {
 
   my $geminstalldir = [$self->runcmd("gem environment gemdir")]->[0];
   return $self->error("Can't run: $@") if($@);
-  
+
   chomp $geminstalldir;
-  my $fullinstalldir = $geminstalldir . "/gems/" . 
+  my $fullinstalldir = $geminstalldir . "/gems/" .
     $self->info->data->{name} . "-" .
       $self->info->data->{version};
   foreach ($self->listdir("$installdir/$fullinstalldir")) {
@@ -349,7 +357,7 @@ sub install_gemspec {
 
   my $name = $self->info->data->{'name'};
   my $version = $self->info->data->{'version'};
-  
+
   $self->runcmd("mkdir -p $installdir/$geminstalldir/specifications");
   $self->template_file($self->info->confdir . "/templates/gemspec.template",
                        "$installdir/$geminstalldir/specifications/" .
@@ -410,6 +418,23 @@ sub listdir {
   # preserve daemontools log dirs, not needed with new logrun
   #@ret = ($dir) if(scalar @ret == 0 and $dir eq 'main');
   return @ret;
+}
+
+sub sudo {
+    # this procedure is modified from Seco::sudo
+    my $self = shift;
+    my $who = shift;
+    my $uid = getpwnam($who);
+
+    return system(@_) if ($> == $uid);
+
+    my $whoami = getpwuid($>);
+    warn "$whoami: This operation needs '$who' privileges. Invoking sudo.\n";
+
+    foreach my $sudo (qw(/usr/local/bin/sudo /usr/bin/sudo)) {
+	next unless -x $sudo;
+	return system($sudo, '-u', $who, @_);
+    }
 }
 
 # XXX: maybe keep a "global log of all command output" in the builder object,
@@ -493,6 +518,61 @@ sub fetch {
     $self->info->data->{sourcetar} = $loc;
 
   }
+  # build from git
+  elsif ( $target = $self->info->data->{'git'} ) {
+
+    eval { require Seco::Git; };
+    die "Seco::Git required to build package from git: $@" if ($@);
+    $self->infomsg("Fetching $target");
+    my $agent = Seco::Git->new(
+      branch     => $self->info->data->{'git-branch'},
+      depositdir => ( $self->tmpdir . "/git" ),
+      tmpdir     => $self->tmpdir
+    );
+
+    my $hash = $agent->pull($target)
+      or die "Unable to pull $target: $!";
+    my $loc  = $hash->{sourcedir};
+
+    $self->info->data->{sourcedir} = $loc;
+
+  }
+  # build from pypi.python.org
+  elsif ( $target = $self->info->data->{'pypi'} ) {
+    eval { require Seco::PyPi; };
+    die "Seco::Pypi required to build package from pypi: $@" if ($@);
+    $self->infomsg("Fetching $target");
+    my $agent = Seco::PyPi->new(
+      xfercmd    => $self->info->data->{xfercmd},
+      depositdir => ( $self->tmpdir . "/pypi" ),
+      tmpdir     => $self->tmpdir
+    );
+
+    my $hash = $agent->pull($target, $self->info->data->{'version'})
+      or die "Unable to pull $target: $!";
+    my $loc = $hash->{sourcetar};
+    my $ver = $hash->{version};
+
+    $self->info->data->{sourcetar} = $loc;
+    $self->info->data->{version}   = $ver;
+  }
+  # build from pecl.php.net
+  elsif ( $target = $self->info->data->{'pecl'} ) {
+    eval { require Seco::PECL; };
+    die "Seco::PECL required to build package from pecl: $@" if ($@);
+    $self->infomsg("Fetching $target");
+    my $agent = Seco::PECL->new(
+      xfercmd    => $self->info->data->{xfercmd},
+      depositdir => ( $self->tmpdir . "/pypi" ),
+      tmpdir     => $self->tmpdir
+    );
+
+    my $hash = $agent->pull($target, $self->info->data->{'version'})
+      or die "Unable to pull $target: $!";
+    my $loc  = $hash->{sourcetar};
+
+    $self->info->data->{sourcetar} = $loc;
+  }
 }
 
 sub build {
@@ -503,6 +583,13 @@ sub build {
 
   # fetch source from remote
   $self->fetch();
+
+  # check and install buildrequire
+  foreach(@{$self->info->data->{buildrequires}}) {
+      $self->infomsg("INSTALLING $_");
+      $self->install_build_require( $_ )
+	if $self->need_build_require( $_ );
+  }
 
   # build the source if there is any
   if ( $self->info->data->{sourcedir} and -d $self->info->data->{sourcedir} ) {
@@ -535,6 +622,7 @@ sub build {
   my $destdir = $self->installdir;
   my $prefix  = $self->info->data->{buildprefix}?$self->info->data->{buildprefix}:"/usr";
   my $perl    = $self->info->data->{perl}?$self->info->data->{perl}:"/usr/bin/perl";
+  my $python  = $self->info->data->{python}?$self->info->data->{python}:"/usr/bin/python";
 
   chdir $realbuild;
   $self->{_vars}{BUILDDIR} = $realbuild;
@@ -560,19 +648,23 @@ sub build {
      $self->info->scripts->{gembuild}) {
     # FATAL ON ERRORS
     $self->runcmd( "PERL=$perl INSTALLROOT=$destdir DESTDIR=$destdir "
+                   . "PYTHON=$python "
 		   . "PREFIX=$prefix PKGVERID=" 
 		   . $self->pkgverid . " "
 		   . "PACKAGEVERSION=" . $self->info->data->{version} . " "
 		   . "PACKAGENAME=" . $self->info->data->{name} . " "
+		   . "PACKAGETYPE=" . $self->info->data->{packagetype} . " "
 		   . $self->info->scripts->{build} );
     return $self->error("Error running: $@") if($@);
   } else {
     # FATAL ON ERRORS
     $self->runcmd( "PERL=$perl INSTALLROOT=$destdir DESTDIR=$destdir "
+                   . "PYTHON=$python "
 		   . "PREFIX=$prefix PKGVERID=" 
 		   . $self->pkgverid . " "
 		   . "PACKAGEVERSION=" . $self->info->data->{version} . " "
 		   . "PACKAGENAME=" . $self->info->data->{name} . " "
+		   . "PACKAGETYPE=" . $self->info->data->{packagetype} . " "
 		   . $self->info->scripts->{build} );
     return $self->error("Error running: $@") if($@);
   }
@@ -848,6 +940,25 @@ BEGIN {
   __PACKAGE__->_accessors( stagedir => undef );
 }
 
+sub need_build_require {
+    my $self = shift;
+    my $package = shift;
+
+    system('rpm', '--quiet', '-q', $package);
+
+    return ($? >> 8);
+}
+
+sub install_build_require {
+    my $self = shift;
+    my $package = shift;
+
+    $self->sudo('root', 'yum', 'install', '-y', $package);
+    return $self->error("Can't run yum install $package") if ($? >> 8);
+
+    1;
+}
+
 sub makepackage {
   my $self = shift;
 
@@ -865,7 +976,7 @@ sub makepackage {
     chomp $self->info->data->{arch};
   }
 
-  $self->template_file( $self->info->confdir . "/templates/spec.template", 
+  $self->template_file( $self->info->confdir . "/templates/spec.template",
                         $self->tmpdir . "/spec" );
 
   open my $f, ">>" . $self->tmpdir . "/spec";
@@ -875,7 +986,7 @@ sub makepackage {
   if($self->info->data->{gem}) {
     $self->install_gemspec;
   }
-  
+
   foreach ( $self->listdir($installdir) ) {
     my $path = "$installdir/$_";
     next if m{/\.packlist$};    # XXX: cleanup in build, not here
@@ -899,10 +1010,10 @@ sub makepackage {
     }
 
     if ( -d _ ) {
-      print $f $rpmattr . "\%dir /$_\n" if ( -e "$path/.keep" );
+      print $f "\"" . $rpmattr . "\%dir /$_\"\n" if ( -e "$path/.keep" );
     }
     else {
-      print $f $rpmattr . "/$_\n";
+      print $f "\"" . $rpmattr . "/$_\"\n";
     }
   }
 
@@ -1026,6 +1137,27 @@ BEGIN {
 
 }
 
+sub need_build_require {
+    my $self = shift;
+    my $package = shift;
+
+    my $out = qx(dpkg-query -W --showformat='\${Status}' '$package');
+
+    return 0 if $out =~ /install ok installed/;
+
+    1;
+}
+
+sub install_build_require {
+    my $self = shift;
+    my $package = shift;
+
+    $self->sudo('root', 'apt-get', '-y', 'install', $package);
+    return $self->error("Can't run apt-get install $package") if ($? >> 8);
+
+    1;
+}
+
 sub makepackage {
   my $self = shift;
 
@@ -1093,17 +1225,17 @@ sub makepackage {
     }
   }
   $self->info->data->{filelist} = join ",", @filelist;
-  
+
   # generate the gemspec file based on that
   my $name = $self->info->data->{name};
   my $version = $self->info->data->{version};
-  
+
   $self->runcmd("mkdir -p $installdir/$geminstalldir/specifications");
-  
+
   $self->template_file($self->info->confdir . "/templates/gemspec.template",
                        "$installdir/$geminstalldir/specifications/" .
                        "$name-$version.gemspec");
-  
+
   chdir($installdir . "/" . $fullinstalldir);
   my $gem = undef;
   my @ten = $self->runcmd("gem build $installdir/$geminstalldir/" .
@@ -1175,7 +1307,7 @@ sub _init {
 
     my $table;
     eval { $table = YAML::Syck::LoadFile($_); };
-    return $self->error("$_ exists but is malformed: $@") if $@;
+    die ("FATAL: $_ exists but is malformed: $@") if $@;
     $self->infomsg( "LOADING " . $_ );
 
     foreach my $key ( keys %$table ) {
@@ -1443,6 +1575,11 @@ sub platforms {
 
     if ( $rel =~ /Red Hat Linux release (\S+)/ ) {
       push @platforms, "redhat-$1";
+    }
+
+    if ( $rel =~ /CentOS release (\S+)/ ) {
+      push @platforms, "centos-$1";
+      push @platforms, "centos";
     }
   }
   push @platforms, 'override';

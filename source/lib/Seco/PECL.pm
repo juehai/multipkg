@@ -1,6 +1,6 @@
-package Seco::HTTP;
+package Seco::PECL;
 
-# created at : 2013-03-21 15:56:19
+# created at : 2013-03-30 18:08:47
 # author     : Jianing Yang <jianingy.yang AT gmail DOT com>
 
 use strict;
@@ -32,28 +32,23 @@ sub _init {
 
 sub pull {
     my $self = shift;
-    my $url = shift;
+    my $name = shift;
+    my $version = shift;
 
     my $basedir = $self->tmpdir . "/build";
     mkdir $basedir unless(-d $basedir);
 
-    my $tarball;
-    if ($url =~ /\.tar\.bz2$/) {
-        $tarball = $self->depositdir . '/source.tar.bz2';
-    } elsif ($url =~ /\.tar\.xz$/) {
-        $tarball = $self->depositdir . '/source.tar.xz';
-    } else {
-        $tarball = $self->depositdir . '/source.tar.gz';
-    }
+    my $url = "http://pecl.php.net/get/$name/$version";
+
+    my $tarball = $self->depositdir . '/source.tar.gz';
     my $xfercmd = $self->xfercmd;
 
     $xfercmd =~ s/%s/$tarball/;
     $xfercmd =~ s/%u/$url/;
 
-    system($xfercmd); 
-    return undef if($? >> 8);
+    system($xfercmd);
 
-    return { tarball => $tarball };
+    return { sourcetar => $tarball };
 }
 
 1;
