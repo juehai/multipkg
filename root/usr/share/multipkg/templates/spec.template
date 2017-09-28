@@ -4,7 +4,7 @@ Version: %version%
 Release: %release%
 License: %license%
 %%ifset(epoch)
-Epoch: %epoch
+Epoch: %epoch%
 %%endif
 Group: Local
 Provides: %name% %providelist%
